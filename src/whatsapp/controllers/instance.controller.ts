@@ -64,7 +64,7 @@ export class InstanceController {
     private readonly eventEmitter: EventEmitter2,
     private readonly instanceService: InstanceService,
     private readonly redisCache: RedisCache,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger(this.configService, InstanceController.name);
 
@@ -157,7 +157,11 @@ export class InstanceController {
   }
 
   public async connectionState({ instanceName }: InstanceDto) {
-    return this.waMonitor.waInstances.get(instanceName)?.connectionStatus;
+    return (
+      this.waMonitor.waInstances.get(instanceName)?.connectionStatus || {
+        state: 'Not Connected',
+      }
+    );
   }
 
   public async fetchInstances({ instanceName }: InstanceDto) {
