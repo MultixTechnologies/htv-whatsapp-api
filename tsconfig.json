@@ -3,6 +3,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "declaration": true,
+    "target": "ES6",
+    "module": "commonjs",
     "rootDir": "src",
     "resolveJsonModule": true,
     "removeComments": true,
@@ -15,12 +17,6 @@
     "strictNullChecks": false,
     "incremental": true,
     "noImplicitAny": false,
-    "moduleResolution": "node",
-    "module": "ESNext", // Updated
-    "target": "ESNext", // Updated
-    "types": ["node"],
-    "lib": ["esnext"], // Update
   },
-  "include": ["src"],
   "exclude": ["node_modules", "./test", "./dist", "./prisma"],
 }

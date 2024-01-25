@@ -5,7 +5,7 @@
   "main": "src/main.ts",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/main.ts",
+    "start": "ts-node ./src/main.ts",
     "start:prod": "bash start.sh",
     "dev": "tsnd --respawn --ignore-watch node_modules src/main.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
