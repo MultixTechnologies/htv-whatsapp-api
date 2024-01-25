@@ -15,11 +15,11 @@
     "strictNullChecks": false,
     "incremental": true,
     "noImplicitAny": false,
-    "moduleResolution": "Node",
-    "module": "CommonJS",
-    "target": "ES6",
+    "moduleResolution": "node",
+    "module": "ESNext", // Updated
+    "target": "ESNext", // Updated
     "types": ["node"],
-    "lib": ["ES2021.String"],
+    "lib": ["esnext"], // Update
   },
   "include": ["src"],
   "exclude": ["node_modules", "./test", "./dist", "./prisma"],
