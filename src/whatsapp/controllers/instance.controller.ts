@@ -157,11 +157,11 @@ export class InstanceController {
   }
 
   public async connectionState({ instanceName }: InstanceDto) {
-    return (
-      this.waMonitor.waInstances.get(instanceName)?.connectionStatus || {
-        state: 'Not Connected',
-      }
-    );
+    if (this.waMonitor.waInstances.get(instanceName)?.connectionStatus?.state === 'open') {
+      return this.waMonitor.waInstances.get(instanceName)?.connectionStatus
+    } else {
+      throw new BadRequestException('Not Connected to Whatsapp')
+    }
   }
 
   public async fetchInstances({ instanceName }: InstanceDto) {

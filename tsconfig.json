@@ -5,7 +5,7 @@
     "declaration": true,
     "target": "ES6",
     "module": "commonjs",
-    "rootDir": "src",
+    "rootDir": "./src",
     "resolveJsonModule": true,
     "removeComments": true,
     "outDir": "./dist",
@@ -17,6 +17,9 @@
     "strictNullChecks": false,
     "incremental": true,
     "noImplicitAny": false,
+    "moduleResolution": "Node",
+    "types": ["node"],
+    "lib": ["ES2021.String"],
   },
   "exclude": ["node_modules", "./test", "./dist", "./prisma"],
 }

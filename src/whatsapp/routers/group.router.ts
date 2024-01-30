@@ -50,6 +50,7 @@ import {
 import { HttpStatus } from '../../app.module';
 import { GroupController } from '../controllers/group.controller';
 import { routerPath, dataValidate, groupValidate } from '../../validate/router.validate';
+import { InstanceDto } from '../dto/instance.dto';
 
 export function GroupRouter(
   groupController: GroupController,
@@ -73,6 +74,11 @@ export function GroupRouter(
       });
 
       res.status(HttpStatus.CREATED).json(response);
+    })
+    .get(routerPath('findAllGroups'), ...guards, async (req, res) => {
+      const instance = req.params as unknown as InstanceDto;
+      const response = await groupController.findAllGroups(instance);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('findGroupInfos'), ...guards, async (req, res) => {
       const response = await groupValidate<GroupJid>({

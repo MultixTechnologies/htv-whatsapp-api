@@ -19,4 +19,4 @@ echo
 echo "> Starting application..."
 echo
 
-node ./dist/src/main.js
+node ./src/main.ts

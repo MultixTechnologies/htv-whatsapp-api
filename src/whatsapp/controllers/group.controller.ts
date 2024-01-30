@@ -44,7 +44,7 @@ import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
 
 export class GroupController {
-  constructor(private readonly waMonitor: WAMonitoringService) {}
+  constructor(private readonly waMonitor: WAMonitoringService) { }
 
   public async createGroup({ instanceName }: InstanceDto, create: CreateGroupDto) {
     return await this.waMonitor.waInstances.get(instanceName).createGroup(create);
@@ -57,6 +57,9 @@ export class GroupController {
     return await this.waMonitor.waInstances.get(instanceName).updateGroupPicture(update);
   }
 
+  public async findAllGroups({ instanceName }: InstanceDto) {
+    return await this.waMonitor.waInstances.get(instanceName).findGroups();
+  }
   public async findGroupInfo({ instanceName }: InstanceDto, groupJid: GroupJid) {
     return await this.waMonitor.waInstances.get(instanceName).findGroup(groupJid);
   }

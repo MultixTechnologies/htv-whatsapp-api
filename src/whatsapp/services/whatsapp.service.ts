@@ -389,7 +389,7 @@ export class WAStartupService {
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
           `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instanceQr.count} }\n` +
-            qrcode,
+          qrcode,
         ),
       );
     }
@@ -560,11 +560,13 @@ export class WAStartupService {
         if (chatsRepository.find((cr) => cr.remoteJid === chat.id)) {
           continue;
         }
-
-        chatsRaw.push({
-          remoteJid: chat.id,
-          instanceId: this.instance.id,
-        } as PrismType.Chat);
+        if (chat.createdBy) {
+          chatsRaw.push({
+            remoteJid: chat.id,
+            instanceId: this.instance.id,
+            groupName: chat.name,
+          } as PrismType.Chat);
+        }
       }
 
       await this.sendDataWebhook('chatsUpsert', chatsRaw);
@@ -674,12 +676,31 @@ export class WAStartupService {
       isLatest: boolean;
     }) => {
       if (isLatest) {
-        const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
-          return {
-            remoteJid: chat.id,
-            instanceId: this.instance.id,
-          } as PrismType.Chat;
+        const allChats: PrismType.Chat[] = await this.repository.chat.findMany({
+          where: { instanceId: this.instance.id },
         });
+
+        const newChats: any = chats.filter(
+          (chat) => !allChats.some((i) => i.remoteJid === chat.id),
+        );
+
+        // Log each element in newChats to identify the problematic data
+        // newChats.forEach((chat, index) => {
+        //   if (typeof chat === 'function') {
+        //     console.log(`newChats[${index}]:`, chat);
+        //   }
+        // });
+        const chatsRaw: PrismType.Chat[] = newChats
+          .map((chat) => {
+            if (chat.createdBy) {
+              return {
+                remoteJid: chat.id,
+                groupName: chat.name,
+                instanceId: this.instance.id,
+              } as PrismType.Chat;
+            }
+          })
+          .filter(Boolean); // Remove undefined values from the array
         await this.sendDataWebhook('chatsSet', chatsRaw);
         await this.repository.chat.createMany({ data: chatsRaw });
       }
@@ -1590,15 +1611,15 @@ export class WAStartupService {
     try {
       const msg: proto.IWebMessageInfo = m?.content
         ? {
-            key: {
-              id: m.keyId,
-              fromMe: m.keyFromMe,
-              remoteJid: m.keyRemoteJid,
-            },
-            message: {
-              [m.messageType]: m.content,
-            },
-          }
+          key: {
+            id: m.keyId,
+            fromMe: m.keyFromMe,
+            remoteJid: m.keyRemoteJid,
+          },
+          message: {
+            [m.messageType]: m.content,
+          },
+        }
         : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
 
       for (const subtype of MessageSubtype) {
@@ -1808,6 +1829,19 @@ export class WAStartupService {
     }
   }
 
+  public async findGroups() {
+    try {
+      return await this.repository.chat.findMany({
+        where: { instanceId: this.instance.id },
+        select: {
+          remoteJid: true,
+          groupName: true,
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException('Error fetching group', error.toString());
+    }
+  }
   public async findGroup(id: GroupJid, reply: 'inner' | 'out' = 'out') {
     try {
       return await this.client.groupMetadata(id.groupJid);
