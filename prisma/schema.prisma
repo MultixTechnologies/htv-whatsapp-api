@@ -85,6 +85,12 @@ enum DeviceMessage {
   web
 }
 
+enum MessageStatus {
+  Success
+  Scheduled
+  Error
+}
+
 model Message {
   id               Int             @id @default(autoincrement())
   keyId            String          @db.VarChar(100)
@@ -96,6 +102,10 @@ model Message {
   content          Json            @db.Json
   messageTimestamp Int             @db.Int
   device           DeviceMessage
+  status           MessageStatus   @default(Success)
+  postTitle        String?         @db.VarChar(500)
+  groupName        String?         @db.VarChar(255)
+  jobId            String?         @db.VarChar(255)
   isGroup          Boolean?        @db.TinyInt
   Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId       Int
@@ -103,6 +113,8 @@ model Message {
   typebotSessionId Int?
   MessageUpdate    MessageUpdate[]
   Media            Media?
+  createdAt        DateTime?       @default(now())
+  updatedAt        DateTime?       @updatedAt
 
   @@index([keyId], name: "keyId")
 }

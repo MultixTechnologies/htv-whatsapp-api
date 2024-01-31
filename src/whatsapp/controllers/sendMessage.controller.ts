@@ -50,9 +50,12 @@ import {
 import { WAMonitoringService } from '../services/monitor.service';
 
 export class SendMessageController {
-  constructor(private readonly waMonitor: WAMonitoringService) {}
+  constructor(private readonly waMonitor: WAMonitoringService) { }
 
   public async sendText({ instanceName }: InstanceDto, data: SendTextDto) {
+    if (data?.scheduleDateTime) {
+      return await this.waMonitor.waInstances.get(instanceName).scheduleTextMessage(data);
+    }
     return await this.waMonitor.waInstances.get(instanceName).textMessage(data);
   }
 
@@ -64,6 +67,9 @@ export class SendMessageController {
       throw new BadRequestException('Enter the file name for the "document" type.');
     }
     if (isURL(data?.mediaMessage?.media as string)) {
+      if (data?.scheduleDateTime) {
+        return await this.waMonitor.waInstances.get(instanceName).scheduleMediaMessage(data);
+      }
       return await this.waMonitor.waInstances.get(instanceName).mediaMessage(data);
     }
   }

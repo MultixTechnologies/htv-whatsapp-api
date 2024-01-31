@@ -175,6 +175,12 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
 
       return res.status(HttpStatus.OK).json(response);
     })
+    .post(routerPath('findMessagesByJob'), ...guards, async (req, res) => {
+      const instance = req.params as unknown as InstanceDto;
+      const response = await chatController.fetchMessagesByJob(instance, req.body)
+
+      return res.status(HttpStatus.OK).json(response);
+    })
     .get(routerPath('findChats'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
         request: req,

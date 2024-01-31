@@ -131,6 +131,7 @@ import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
 import { RedisCache } from '../../cache/redis';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+import schedule from 'node-schedule'
 
 type InstanceQrCode = {
   count: number;
@@ -869,6 +870,8 @@ export class WAStartupService {
 
               const ext = mime.extension(head.headers['content-type']);
               if (ext && ext.includes('html')) {
+                console.log("messageRaw", messageRaw);
+
                 await this.textMessage({
                   number: messageRaw.keyRemoteJid,
                   textMessage: { text: url },
@@ -1167,6 +1170,9 @@ export class WAStartupService {
     number: string,
     message: T,
     options?: Options,
+    metaData?: any,
+    scheduleDateTime?: Date,
+    messageId?: number,
   ) {
     let quoted: PrismType.Message;
     if (options?.quotedMessageId) {
@@ -1209,7 +1215,7 @@ export class WAStartupService {
         await this.client.sendPresenceUpdate('paused', recipient);
       }
 
-      const messageSent: PrismType.Message = await (async () => {
+      const messageSent: any = await (async () => {
         let m: proto.IWebMessageInfo;
         let q: proto.IWebMessageInfo;
         if (quoted) {
@@ -1244,7 +1250,7 @@ export class WAStartupService {
         }
 
         return {
-          id: undefined,
+          id: messageId || undefined,
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
           keyRemoteJid: m.key.remoteJid,
@@ -1262,13 +1268,25 @@ export class WAStartupService {
           device: getDevice(m.key.id),
           isGroup: isJidGroup(m.key.remoteJid),
           typebotSessionId: undefined,
+          status: "Success",
+          postTitle: metaData?.postTitle || '',
+          groupName: metaData?.groupName || '',
+          jobId: metaData?.jobId || '',
         };
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
-        const { id } = await this.repository.message.create({
-          data: messageSent,
-        });
-        messageSent.id = id;
+
+        if (scheduleDateTime) {
+          const update = await this.repository.message.update({
+            where: { id: messageId },
+            data: messageSent,
+          });
+        } else {
+          const { id } = await this.repository.message.create({
+            data: messageSent,
+          });
+          messageSent.id = id;
+        }
       }
 
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
@@ -1297,7 +1315,60 @@ export class WAStartupService {
         },
       },
       data?.options,
+      {
+        postTitle: data.metaData.postTitle,
+        groupName: data.metaData.groupName,
+        jobId: data.metaData.jobId,
+      }
     );
+  }
+
+  public async scheduleTextMessage(data: SendTextDto) {
+    const message: any = {
+      id: undefined,
+      keyId: 'Not Sent Yet',
+      keyFromMe: true,
+      keyRemoteJid: 'Not Sent Yet',
+      messageType: "scheduledMessage",
+      content: { text: data.textMessage.text },
+      messageTimestamp: 1,
+      instanceId: this.instance.id,
+      device: 'web',
+      isGroup: true,
+      typebotSessionId: undefined,
+      status: "Scheduled",
+      postTitle: data?.metaData?.postTitle,
+      groupName: data?.metaData?.groupName,
+      jobId: data?.metaData?.jobId,
+    };
+
+    const { id } = await this.repository.message.create({
+      data: message,
+    });
+    message.id = id
+
+    schedule.scheduleJob(data.scheduleDateTime, async () => {
+      await this.sendMessageWithTyping(
+        data.number,
+        {
+          extendedTextMessage: {
+            text: data.textMessage.text,
+
+          },
+        },
+        data?.options,
+        {
+          postTitle: data.metaData.postTitle,
+          groupName: data.metaData.groupName,
+          jobId: data.metaData.jobId,
+        },
+        data?.scheduleDateTime,
+        id
+      );
+      console.log(`message sent for ${id}.`);
+    });
+
+    return { message: "Message scheduled successfully", data: message }
   }
 
   private async prepareMediaMessage(mediaMessage: MediaMessage) {
@@ -1360,7 +1431,62 @@ export class WAStartupService {
       data.number,
       { ...generate.message },
       data?.options,
+      {
+        postTitle: data.metaData.postTitle,
+        groupName: data.metaData.groupName,
+        jobId: data.metaData.jobId,
+      },
     );
+  }
+
+  public async scheduleMediaMessage(data: SendMediaDto) {
+    const message: any = {
+      id: undefined,
+      keyId: 'Not Sent Yet',
+      keyFromMe: true,
+      keyRemoteJid: 'Not Sent Yet',
+      messageType: "scheduledMessage",
+      content: { url: data.mediaMessage.media },
+      messageTimestamp: 0,
+      instanceId: this.instance.id,
+      device: 'web',
+      isGroup: true,
+      typebotSessionId: undefined,
+      status: "Scheduled",
+      postTitle: data?.metaData?.postTitle,
+      groupName: data?.metaData?.groupName,
+      jobId: data?.metaData?.jobId,
+    };
+
+    const { id } = await this.repository.message.create({
+      data: message,
+    });
+    message.id = id
+
+    schedule.scheduleJob(data.scheduleDateTime, async () => {
+      console.log("data.mediaMessage", data.mediaMessage);
+      const generate = await this.prepareMediaMessage(data.mediaMessage);
+      console.log("generate", generate);
+
+      await this.sendMessageWithTyping(
+        data.number,
+        {
+          ...generate.message,
+        },
+        data?.options,
+        {
+          postTitle: data.metaData.postTitle,
+          groupName: data.metaData.groupName,
+          jobId: data.metaData.jobId,
+        },
+        data?.scheduleDateTime,
+        id
+      );
+      console.log(`message sent for ${id}.`);
+    });
+
+    return { message: "Post scheduled successfully", data: message }
+
   }
 
   public async mediaFileMessage(data: MediaFileDto, file: Express.Multer.File) {
@@ -1785,6 +1911,32 @@ export class WAStartupService {
         records: messages,
       },
     };
+  }
+
+  public async fetchMessagesByJob(query: Query<PrismType.Message>) {
+
+    const messages = await this.repository.message.findMany({
+      where: {
+        instanceId: this.instance.id,
+        jobId: query?.where?.jobId,
+        isGroup: true
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        pushName: true,
+        status: true,
+        content: true,
+        groupName: true,
+        postTitle: true,
+        device: true,
+      },
+    });
+
+    return { messages: messages };
   }
 
   public async fetchChats() {

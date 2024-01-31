@@ -49,7 +49,7 @@ import { Query } from '../../repository/repository.service';
 import { Contact, Message } from '@prisma/client';
 
 export class ChatController {
-  constructor(private readonly waMonitor: WAMonitoringService) {}
+  constructor(private readonly waMonitor: WAMonitoringService) { }
 
   public async whatsappNumber({ instanceName }: InstanceDto, data: WhatsAppNumberDto) {
     return await this.waMonitor.waInstances.get(instanceName).whatsappNumber(data);
@@ -62,7 +62,7 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).markMessageAsRead(data);
   }
 
-  public async readMessagesForId({instanceName}: InstanceDto, data: ReadMessageIdDto) {
+  public async readMessagesForId({ instanceName }: InstanceDto, data: ReadMessageIdDto) {
     return await this.waMonitor.waInstances.get(instanceName).readMessages(data)
   }
 
@@ -95,6 +95,10 @@ export class ChatController {
 
   public async fetchMessages({ instanceName }: InstanceDto, query: Query<Message>) {
     return await this.waMonitor.waInstances.get(instanceName).fetchMessages(query);
+  }
+
+  public async fetchMessagesByJob({ instanceName }: InstanceDto, query: Query<Message>) {
+    return await this.waMonitor.waInstances.get(instanceName).fetchMessagesByJob(query);
   }
 
   public async fetchChats({ instanceName }: InstanceDto) {

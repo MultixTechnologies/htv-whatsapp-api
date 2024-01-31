@@ -56,8 +56,16 @@ export class Metadata extends OptionsMessage {
 class TextMessage {
   text: string;
 }
+
+class MetaData {
+  postTitle?: string
+  groupName?: string
+  jobId?: string
+}
 export class SendTextDto extends Metadata {
   textMessage: TextMessage;
+  metaData?: MetaData
+  scheduleDateTime?: Date
 }
 
 export type MediaType = 'image' | 'document' | 'video' | 'audio';
@@ -71,6 +79,8 @@ export class MediaMessage {
 }
 export class SendMediaDto extends Metadata {
   mediaMessage: MediaMessage;
+  metaData?: MetaData
+  scheduleDateTime?: Date
 }
 
 export class MediaFileDto extends Metadata {
