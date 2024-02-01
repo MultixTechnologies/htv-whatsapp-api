@@ -172,6 +172,7 @@ export class WAStartupService {
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateRedis: AuthStateRedis;
+  private scheduledJobs: any = {};
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -1341,6 +1342,8 @@ export class WAStartupService {
       postTitle: data?.metaData?.postTitle,
       groupName: data?.metaData?.groupName,
       jobId: data?.metaData?.jobId,
+      createdAt: data?.scheduleDateTime,
+      updatedAt: new Date(data?.scheduleDateTime),
     };
 
     const { id } = await this.repository.message.create({
@@ -1348,13 +1351,12 @@ export class WAStartupService {
     });
     message.id = id
 
-    schedule.scheduleJob(data.scheduleDateTime, async () => {
+    const job = schedule.scheduleJob(data.scheduleDateTime, async () => {
       await this.sendMessageWithTyping(
         data.number,
         {
           extendedTextMessage: {
             text: data.textMessage.text,
-
           },
         },
         data?.options,
@@ -1368,8 +1370,10 @@ export class WAStartupService {
         id
       );
       console.log(`message sent for ${id}.`);
+      delete this.scheduledJobs[id];
     });
-
+    console.log("scheduled job", job);
+    this.scheduledJobs[id] = job;
     return { message: "Message scheduled successfully", data: message }
   }
 
@@ -1459,6 +1463,8 @@ export class WAStartupService {
       postTitle: data?.metaData?.postTitle,
       groupName: data?.metaData?.groupName,
       jobId: data?.metaData?.jobId,
+      createdAt: new Date(data?.scheduleDateTime),
+      updatedAt: new Date(data?.scheduleDateTime),
     };
 
     const { id } = await this.repository.message.create({
@@ -1466,7 +1472,7 @@ export class WAStartupService {
     });
     message.id = id
 
-    schedule.scheduleJob(data.scheduleDateTime, async () => {
+    const job = schedule.scheduleJob(data.scheduleDateTime, async () => {
       const generate = await this.prepareMediaMessage(data.mediaMessage);
 
       await this.sendMessageWithTyping(
@@ -1485,10 +1491,35 @@ export class WAStartupService {
         id
       );
       console.log(`message sent for ${id}.`);
+      delete this.scheduledJobs[id];
     });
+    this.scheduledJobs[id] = job;
 
     return { message: "Post scheduled successfully", data: message }
+  }
 
+  public async cancelSchedule(data: any) {
+    const scheduledJob: any = this.scheduledJobs[data.messageId];
+
+    if (scheduledJob) {
+
+      // Cancel the job
+      scheduledJob.cancel();
+
+      // Remove scheduling information from the database
+      await this.repository.message.update({
+        where: { id: data.messageId },
+        data: {
+          status: "Cancelled"
+        }
+      });
+
+      console.log(`Scheduled job for message ${data.messageId} cancelled.`);
+      return { message: "Scheduled job cancelled successfully" };
+    } else {
+      console.log(`No scheduling information found for message ${data.messageId}.`);
+      return { message: "No scheduling information found for the specified message" };
+    }
   }
 
   public async mediaFileMessage(data: MediaFileDto, file: Express.Multer.File) {

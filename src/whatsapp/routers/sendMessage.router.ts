@@ -99,6 +99,11 @@ export function MessageRouter(
 
       return res.status(HttpStatus.CREATED).json(response);
     })
+    .post(routerPath('cancelSchedule'), ...guards, async (req, res) => {
+      const instance = req.params as any;
+      const response = await sendMessageController.cancelSchedule(instance, req.body)
+      return res.status(HttpStatus.OK).json(response);
+    })
     .post(
       routerPath('sendMediaFile'),
       ...guards,

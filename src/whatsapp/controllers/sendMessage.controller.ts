@@ -59,6 +59,10 @@ export class SendMessageController {
     return await this.waMonitor.waInstances.get(instanceName).textMessage(data);
   }
 
+  public async cancelSchedule({ instanceName }: InstanceDto, data: SendTextDto) {
+    return await this.waMonitor.waInstances.get(instanceName).cancelSchedule(data);
+  }
+
   public async sendMedia({ instanceName }: InstanceDto, data: SendMediaDto) {
     if (isBase64(data?.mediaMessage?.media)) {
       throw new BadRequestException('Owned media must be a url');

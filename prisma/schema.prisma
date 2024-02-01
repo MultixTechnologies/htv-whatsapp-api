@@ -89,6 +89,7 @@ enum MessageStatus {
   Success
   Scheduled
   Error
+  Cancelled
 }
 
 model Message {
