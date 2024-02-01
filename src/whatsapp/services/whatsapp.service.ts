@@ -1319,6 +1319,7 @@ export class WAStartupService {
         postTitle: data.metaData.postTitle,
         groupName: data.metaData.groupName,
         jobId: data.metaData.jobId,
+        postType: data.metaData.postType,
       }
     );
   }
@@ -1361,6 +1362,7 @@ export class WAStartupService {
           postTitle: data.metaData.postTitle,
           groupName: data.metaData.groupName,
           jobId: data.metaData.jobId,
+          postType: data.metaData.postType,
         },
         data?.scheduleDateTime,
         id
@@ -1435,6 +1437,7 @@ export class WAStartupService {
         postTitle: data.metaData.postTitle,
         groupName: data.metaData.groupName,
         jobId: data.metaData.jobId,
+        postType: data.metaData.postType,
       },
     );
   }
@@ -1476,6 +1479,7 @@ export class WAStartupService {
           postTitle: data.metaData.postTitle,
           groupName: data.metaData.groupName,
           jobId: data.metaData.jobId,
+          postType: data.metaData.postType,
         },
         data?.scheduleDateTime,
         id
