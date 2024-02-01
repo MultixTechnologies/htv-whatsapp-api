@@ -1464,9 +1464,7 @@ export class WAStartupService {
     message.id = id
 
     schedule.scheduleJob(data.scheduleDateTime, async () => {
-      console.log("data.mediaMessage", data.mediaMessage);
       const generate = await this.prepareMediaMessage(data.mediaMessage);
-      console.log("generate", generate);
 
       await this.sendMessageWithTyping(
         data.number,
@@ -1933,6 +1931,7 @@ export class WAStartupService {
         groupName: true,
         postTitle: true,
         device: true,
+        messageType: true
       },
     });
 
