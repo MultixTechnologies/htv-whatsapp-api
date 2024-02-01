@@ -1256,7 +1256,7 @@ export class WAStartupService {
           keyRemoteJid: m.key.remoteJid,
           keyParticipant: m?.participant,
           pushName: m?.pushName,
-          messageType: getContentType(m.message),
+          messageType: metaData?.postType,
           content: m.message[getContentType(m.message)] as PrismType.Prisma.JsonValue,
           messageTimestamp: (() => {
             if (Long.isLong(m.messageTimestamp)) {
@@ -1329,7 +1329,7 @@ export class WAStartupService {
       keyId: 'Not Sent Yet',
       keyFromMe: true,
       keyRemoteJid: 'Not Sent Yet',
-      messageType: "scheduledMessage",
+      messageType: data?.metaData?.postType,
       content: { text: data.textMessage.text },
       messageTimestamp: 1,
       instanceId: this.instance.id,
@@ -1445,7 +1445,7 @@ export class WAStartupService {
       keyId: 'Not Sent Yet',
       keyFromMe: true,
       keyRemoteJid: 'Not Sent Yet',
-      messageType: "scheduledMessage",
+      messageType: data?.metaData?.postType,
       content: { url: data.mediaMessage.media },
       messageTimestamp: 0,
       instanceId: this.instance.id,

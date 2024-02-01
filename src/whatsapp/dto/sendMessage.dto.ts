@@ -61,6 +61,7 @@ class MetaData {
   postTitle?: string
   groupName?: string
   jobId?: string
+  postType?: string
 }
 export class SendTextDto extends Metadata {
   textMessage: TextMessage;
