@@ -124,7 +124,7 @@ import {
   AuthStateRedis,
 } from '../../utils/use-multi-file-auth-state-redis-db';
 import mime from 'mime-types';
-import { Instance, Webhook } from '@prisma/client';
+import { Instance, Prisma, Webhook } from '@prisma/client';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
@@ -980,11 +980,27 @@ export class WAStartupService {
 
   private readonly groupHandler = {
     'groups.upsert': (groupMetadata: GroupMetadata[]) => {
+      console.log("groupMetadata", groupMetadata);
       this.sendDataWebhook('groupsUpsert', groupMetadata);
+      groupMetadata.map(async (group) => (
+        await this.repository.chat.create({
+          data: {
+            remoteJid: group.id,
+            groupName: group.subject,
+            instanceId: this.instance.id
+          }
+        })
+      ));
     },
 
     'groups.update': (groupMetadataUpdate: Partial<GroupMetadata>[]) => {
       this.sendDataWebhook('groupsUpdated', groupMetadataUpdate);
+      groupMetadataUpdate.map(async (group) => (
+        await this.repository.chat.updateMany({
+          where: { remoteJid: group.id },
+          data: { groupName: group.subject }
+        })
+      ));
     },
 
     'group-participants.update': (participantsUpdate: {
@@ -1000,6 +1016,7 @@ export class WAStartupService {
     this.client.ev.process((events) => {
       if (!this.endSession) {
         const database = this.configService.get<Database>('DATABASE');
+        console.log("events", events);
 
         if (events['connection.update']) {
           this.connectionUpdate(events['connection.update']);
